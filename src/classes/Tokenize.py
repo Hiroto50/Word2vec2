@@ -1,9 +1,12 @@
-class Tokenize():
+import torch
+
+class Tokenize:
     def __init__(self, window_size):
         self.window_size = window_size
+        self.wordtoindex = None
 
     def tokenize(self, dataset):
-        wordtoindex = dict()
+        wordtoindex = {}
         index = 0
         for sentence in dataset:
             for word in sentence.split():
@@ -13,16 +16,18 @@ class Tokenize():
         self.wordtoindex = wordtoindex
 
     def trainexam(self, dataset):
-        train_examples = list()
+        train_examples = []
         for sentence in dataset:
             for index, target_word in enumerate(sentence.split()):
-                contextwords = list()
+                context_words = []
                 for j in range(
                     max(0, index - self.window_size),
                     min(index + self.window_size + 1, len(sentence.split()))
                 ):
                     if j != index:
-                        contextwords.append(self.wordtoindex[sentence.split()[j]])
-                train_examples.append((self.wordtoindex[target_word], contextwords))
-        return train_examples        
-        
+                        context_words.append(self.wordtoindex[sentence.split()[j]])
+                if context_words:
+                    train_examples.append((self.wordtoindex[target_word], context_words))
+        target_tensors = torch.tensor([target for target, _ in train_examples])
+        context_tensors = torch.tensor([context for _, context in train_examples])
+        return list(zip(target_tensors, context_tensors))
